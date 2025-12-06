@@ -1,7 +1,5 @@
-sys
 scikit-learn==1.7.2
 streamlit
 pandas
-pickle
 numpy
 imblearn
