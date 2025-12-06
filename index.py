@@ -16,11 +16,9 @@ class _RemainderColsList:
     pass
     
 try:
-    # Inject the mock class into the scikit-learn module's namespace
     sklearn.compose._column_transformer._RemainderColsList = _RemainderColsList
     print("Injected _RemainderColsList mock class successfully.")
 except Exception as e:
-    # Fallback print if injection fails
     print(f"Warning: Failed to inject mock class: {e}")
     
 
@@ -32,19 +30,12 @@ print(f"Versi Python: {sys.version.split()[0]}")
 print(f"Versi Scikit-learn: {sklearn.__version__}")
 print("--------------------------------------")
 
-
-# --- Custom Function and Class Definitions (MUST match the training environment) ---
 BINS = [0, 12, 36, 100]
 LABELS = ['New/At-Risk', 'Mid-Term', 'Long-Term/Loyal']
 
 def custom_tenure_binning(X):
-    # FIX: Use DataFrame conversion to robustly handle the (1, 1) input from ColumnTransformer
-    # X is expected to be a 2D array (e.g., shape (1, 1))
-    
-    # Konversi array 2D menjadi DataFrame untuk penanganan kolom yang aman
     tenure_df = pd.DataFrame(X, columns=['tenure'])
     
-    # Lakukan pemotongan (cutting/binning) pada Series dari DataFrame
     binned_data = pd.cut(
         tenure_df['tenure'],
         bins=BINS,
@@ -53,29 +44,23 @@ def custom_tenure_binning(X):
         include_lowest=True
     )
     
-    # Kembalikan sebagai array 2D (shape (1, 1)) agar ColumnTransformer dapat memprosesnya
     return binned_data.values.reshape(-1, 1)
 
 class BinaryEncoder(BaseEstimator, TransformerMixin):
-    # If this class was used in the training pipeline, it MUST be here.
-    # We use a proper fit/transform structure for safety.
     def fit(self, X, y=None):
         return self
 
     def transform(self, X, y=None):
         X_copy = X.copy()
-        # Ensure the mapping logic is robust
         for col in X_copy.columns:
-            # Handle 'gender' mapping specifically if needed, or use a general mapping
             if col == 'gender':
                  X_copy[col] = X_copy[col].replace({'Female': 1, 'Male': 0})
             else:
                  X_copy[col] = X_copy[col].replace({'Yes': 1, 'No': 0})
                  
-        return X_copy.astype(float) # Return as float to prevent type errors
+        return X_copy.astype(float)
 
-# --- Load the Model ---
-FILE_PIPELINE = 'random_forest_model.pkl'
+FILE_PIPELINE = 'gradient_bosting_model.pkl'
 model_pipeline = None
 
 try:
@@ -92,7 +77,6 @@ except FileNotFoundError:
 except Exception as e:
     st.error(f"❌ ERROR Fatal saat memuat model: {type(e).__name__}: {e}")
     st.warning("Ini mungkin disebabkan ketidakcocokan versi Python/Pustaka. Latih ulang model Anda di lingkungan v1.7.")
-    # Exit streamlit execution if loading fails
     sys.exit()
 
 
@@ -104,9 +88,7 @@ st.markdown("Masukkan detail pelanggan untuk memprediksi kemungkinan Churn.")
 with st.sidebar:
     st.header("Customer Information")
 
-    # Binary features
     gender = st.radio("Gender", ['Male', 'Female'])
-    # Checkbox gives boolean, must be converted to 0/1 for the input DataFrame
     senior_citizen_bool = st.checkbox("Senior Citizen (65+ years old)") 
     partner = st.radio("Partner", ['No', 'Yes'])
     dependents = st.radio("Dependents", ['No', 'Yes'])
@@ -132,10 +114,6 @@ with st.sidebar:
     contract = st.selectbox("Contract", ['Month-to-month', 'One year', 'Two year'])
     payment_method = st.selectbox("Payment Method", ['Electronic check', 'Mailed check', 'Bank transfer (automatic)', 'Credit card (automatic)'])
 
-
-# --- Create DataFrame from Inputs ---
-# This dictionary structure should exactly match the column names and initial types
-# expected by the ColumnTransformer in model_pipeline.
 input_data = pd.DataFrame({
     'gender': [gender],
     'SeniorCitizen': [1 if senior_citizen_bool else 0], 
@@ -154,7 +132,7 @@ input_data = pd.DataFrame({
     'PaperlessBilling': [paperless_billing],
     'PaymentMethod': [payment_method],
     'MonthlyCharges': [monthly_charges],
-    'TotalCharges': [total_charges], # Assuming float
+    'TotalCharges': [total_charges], 
     'InternetService': [internet_service],
 })
 
@@ -163,12 +141,11 @@ if st.button("Predict Churn"):
         st.error("Model belum dimuat. Tidak dapat melakukan prediksi.")
     else:
         try:
-            # The entire DataFrame is passed to the pipeline. The pipeline handles all preprocessing.
             prediction = model_pipeline.predict(input_data)
             prediction_proba = model_pipeline.predict_proba(input_data)
 
-            churn_probability = prediction_proba[0][1] # Probability of churn (class 1)
-
+            churn_probability = prediction_proba[0][1] 
+            
             st.subheader("Prediction Results:")
             if prediction[0] == 1:
                 st.markdown(f"## 🚨 Pelanggan diprediksi **CHURN**")
@@ -180,7 +157,7 @@ if st.button("Predict Churn"):
 
             st.write("---")
             st.write("Detail Input yang Dipakai untuk Prediksi:")
-            st.dataframe(input_data.T, use_container_width=True)
+            st.dataframe(input_data.T, width=True)
 
         except Exception as e:
             st.error(f"Terjadi kesalahan saat prediksi. Pastikan data input konsisten dengan pelatihan.")
