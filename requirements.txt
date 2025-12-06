@@ -1,5 +1,5 @@
 sys
-sklearn
+scikit-learn
 streamlit
 pandas
 pickle
