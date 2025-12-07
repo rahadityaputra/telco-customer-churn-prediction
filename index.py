@@ -157,7 +157,7 @@ if st.button("Predict Churn"):
 
             st.write("---")
             st.write("Detail Input yang Dipakai untuk Prediksi:")
-            st.dataframe(input_data.T, width=True)
+            st.dataframe(input_data.T, use_container_width=True)
 
         except Exception as e:
             st.error(f"Terjadi kesalahan saat prediksi. Pastikan data input konsisten dengan pelatihan.")
